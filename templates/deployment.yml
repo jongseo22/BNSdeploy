@@ -1,0 +1,46 @@
+{{- range .Values.apps }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .name }}-deploy
+  namespace: {{ .namespace }}
+spec:
+  replicas: {{ .replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .name }}
+    spec:
+      initContainers:
+        - name: copy-index
+          image: "{{ .image.repository }}:{{ .image.tag }}"
+          command: ["/bin/sh", "-c"]
+          args:
+            - cp /usr/share/nginx/html/index.html {{ .persistence.mountPath }}/index.html
+          volumeMounts:
+            - name: {{ .name }}-volume
+              mountPath: {{ .persistence.mountPath }}
+      containers:
+        - name: {{ .name }}-container
+          image: "{{ .image.repository }}:{{ .image.tag }}"
+          ports:
+            - containerPort: {{ .containerPort }}
+          resources:
+            requests:
+              memory: {{ .resources.requests.memory }}
+              cpu: {{ .resources.requests.cpu }}
+            limits:
+              memory: {{ .resources.limits.memory }}
+              cpu: {{ .resources.limits.cpu }}
+          volumeMounts:
+            - name: {{ .name }}-volume
+              mountPath: {{ .persistence.mountPath }}
+      volumes:
+        - name: {{ .name }}-volume
+          persistentVolumeClaim:
+            claimName: {{ .name }}-pvc
+---
+{{- end }}

@@ -1,0 +1,152 @@
+apps:
+  - name: blog
+    namespace: aws9
+    image:
+      repository: 211.183.3.99/library/blog
+      tag: latest
+    replicaCount: 3
+    containerPort: 80
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "250m"
+      limits:
+        memory: "256Mi"
+        cpu: "500m"
+    persistence:
+      enabled: true
+      mountPath: /usr/share/nginx/html/
+      accessMode: ReadWriteMany
+      size: 1Gi
+      storageClass: aws9-storage
+
+  - name: news
+    namespace: aws9
+    image:
+      repository: 211.183.3.99/library/blog
+      tag: latest
+    replicaCount: 3
+    containerPort: 80
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "250m"
+      limits:
+        memory: "256Mi"
+        cpu: "500m"
+    persistence:
+      enabled: true
+      mountPath: /usr/share/nginx/html/
+      accessMode: ReadWriteMany
+      size: 1Gi
+      storageClass: aws9-storage
+
+  - name: shop
+    namespace: aws9
+    image:
+      repository: 211.183.3.99/library/blog
+      tag: latest
+    replicaCount: 3
+    containerPort: 80
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "250m"
+      limits:
+        memory: "256Mi"
+        cpu: "500m"
+    persistence:
+      enabled: true
+      mountPath: /usr/share/nginx/html/
+      accessMode: ReadWriteMany
+      size: 1Gi
+      storageClass: aws9-storage
+
+applications:
+  - name: blog-app
+    path: blog
+    namespace: aws9
+
+  - name: news-app
+    path: news
+    namespace: aws9
+
+  - name: shop-app
+    path: shop
+    namespace: aws9
+
+scaledObjects:
+  - name: blog-scaler
+    targetDeployment: blog-deploy
+    namespace: aws9
+    minReplicaCount: 1
+    maxReplicaCount: 10
+    pollingInterval: 30
+    cooldownPeriod: 300
+    cpu:
+      type: Utilization
+      value: "60"
+    cron:
+      timezone: Asia/Seoul
+      start: "0 9 * * *"
+      end: "0 18 * * *"
+      desiredReplicas: "3"
+
+  - name: news-scaler
+    targetDeployment: news-deploy
+    namespace: aws9
+    minReplicaCount: 1
+    maxReplicaCount: 10
+    pollingInterval: 30
+    cooldownPeriod: 300
+    cpu:
+      type: Utilization
+      value: "60"
+    cron:
+      timezone: Asia/Seoul
+      start: "0 9 * * *"
+      end: "0 18 * * *"
+      desiredReplicas: "3"
+
+  - name: shop-scaler
+    targetDeployment: shop-deploy
+    namespace: aws9
+    minReplicaCount: 1
+    maxReplicaCount: 10
+    pollingInterval: 30
+    cooldownPeriod: 300
+    cpu:
+      type: Utilization
+      value: "60"
+    cron:
+      timezone: Asia/Seoul
+      start: "0 9 * * *"
+      end: "0 18 * * *"
+      desiredReplicas: "3"
+
+storageClass:
+  name: aws9-storage
+  server: 211.183.3.97
+  share: /shared
+  reclaimPolicy: Delete
+  mountOptions:
+    - nfsvers=4.2
+
+metallb:
+  ipRange: 211.183.3.201-211.183.3.239
+  poolName: first-pool
+  namespace: metallb-system
+
+ingress:
+  className: nginx
+  host: www.aws9.pri
+  paths:
+    - path: /shop(/|$)
+      serviceName: shop-service
+      servicePort: 80
+    - path: /blog(/|$)
+      serviceName: blog-service
+      servicePort: 80
+    - path: /news(/|$)
+      serviceName: news-service
+      servicePort: 80
