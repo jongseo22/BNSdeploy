@@ -194,4 +194,4 @@ ingress:
 # Webhook
 webhook:
   namespace: default
-  image: jongseo22/webhook-server:latest
+  image: DockerHub_ID/webhook-server:latest #ENTER DOCKERHUB ID WITH CUSTOMIZED WEBHOOK IMAGE
