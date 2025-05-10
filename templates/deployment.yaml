@@ -18,8 +18,6 @@ spec:
         - name: copy-index
           image: "{{ .image.repository }}:{{ .image.tag }}"
           command: ["/bin/sh", "-c"]
-          args:
-            - cp /usr/share/nginx/html/index.html {{ .persistence.mountPath }}/index.html
           volumeMounts:
             - name: {{ .name }}-volume
               mountPath: {{ .persistence.mountPath }}

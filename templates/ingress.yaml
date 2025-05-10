@@ -1,0 +1,48 @@
+# install-nginx-ingress
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: install-nginx-ingress
+  namespace: ingress-nginx
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  template:
+    spec:
+      serviceAccountName: helm-admin
+      containers:
+        - name: apply-nginx-ingress
+          image: bitnami/kubectl:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              curl -sSL https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.2/deploy/static/provider/cloud/deploy.yaml -o /tmp/ingress.yaml && \
+              kubectl apply -f /tmp/ingress.yaml
+      restartPolicy: Never
+---
+# ingress-rules
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: BNS-portal
+  namespace: BNS
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+  - host: {{ .Values.ingress.host }}
+    http:
+      paths:
+        {{- range .Values.ingress.paths }}
+        - path: {{ .path }}
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .serviceName }}
+              port:
+                number: {{ .servicePort }}
+        {{- end }}
+{{- end }}

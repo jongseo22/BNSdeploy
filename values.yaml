@@ -1,8 +1,32 @@
+# Deployment, Service, PVC
 apps:
+  # Main
+  - name: main
+    namespace: BNS
+    image:
+      repository: "ENTER_IMAGE_REPO/main" # ENTER_IMAGE_REPO
+      tag: latest
+    replicaCount: 3
+    containerPort: 80
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "250m"
+      limits:
+        memory: "256Mi"
+        cpu: "500m"
+    persistence:
+      enabled: true
+      mountPath: /mnt/data
+      accessMode: ReadWriteMany
+      size: 1Gi
+      storageClass: BNS-storage
+  
+  # Blog
   - name: blog
-    namespace: aws9
+    namespace: BNS
     image:
-      repository: 211.183.3.99/library/blog
+      repository: "ENTER_IMAGE_REPO/blog" # ENTER_IMAGE_REPO
       tag: latest
     replicaCount: 3
     containerPort: 80
@@ -15,15 +39,16 @@ apps:
         cpu: "500m"
     persistence:
       enabled: true
-      mountPath: /usr/share/nginx/html/
+      mountPath: /mnt/data
       accessMode: ReadWriteMany
       size: 1Gi
-      storageClass: aws9-storage
+      storageClass: BNS-storage
 
+  # News
   - name: news
-    namespace: aws9
+    namespace: BNS
     image:
-      repository: 211.183.3.99/library/blog
+      repository: "ENTER_IMAGE_REPO/news" # ENTER_IMAGE_REPO
       tag: latest
     replicaCount: 3
     containerPort: 80
@@ -36,15 +61,16 @@ apps:
         cpu: "500m"
     persistence:
       enabled: true
-      mountPath: /usr/share/nginx/html/
+      mountPath: /mnt/data
       accessMode: ReadWriteMany
       size: 1Gi
-      storageClass: aws9-storage
+      storageClass: BNS-storage
 
+  # Shop
   - name: shop
-    namespace: aws9
+    namespace: BNS
     image:
-      repository: 211.183.3.99/library/blog
+      repository: "ENTER_IMAGE_REPO/shop" # ENTER_IMAGE_REPO
       tag: latest
     replicaCount: 3
     containerPort: 80
@@ -57,90 +83,104 @@ apps:
         cpu: "500m"
     persistence:
       enabled: true
-      mountPath: /usr/share/nginx/html/
+      mountPath: /mnt/data
       accessMode: ReadWriteMany
       size: 1Gi
-      storageClass: aws9-storage
+      storageClass: BNS-storage
 
-applications:
-  - name: blog-app
-    path: blog
-    namespace: aws9
-
-  - name: news-app
-    path: news
-    namespace: aws9
-
-  - name: shop-app
-    path: shop
-    namespace: aws9
-
-scaledObjects:
-  - name: blog-scaler
-    targetDeployment: blog-deploy
-    namespace: aws9
-    minReplicaCount: 1
-    maxReplicaCount: 10
-    pollingInterval: 30
-    cooldownPeriod: 300
-    cpu:
-      type: Utilization
-      value: "60"
-    cron:
-      timezone: Asia/Seoul
-      start: "0 9 * * *"
-      end: "0 18 * * *"
-      desiredReplicas: "3"
-
-  - name: news-scaler
-    targetDeployment: news-deploy
-    namespace: aws9
-    minReplicaCount: 1
-    maxReplicaCount: 10
-    pollingInterval: 30
-    cooldownPeriod: 300
-    cpu:
-      type: Utilization
-      value: "60"
-    cron:
-      timezone: Asia/Seoul
-      start: "0 9 * * *"
-      end: "0 18 * * *"
-      desiredReplicas: "3"
-
-  - name: shop-scaler
-    targetDeployment: shop-deploy
-    namespace: aws9
-    minReplicaCount: 1
-    maxReplicaCount: 10
-    pollingInterval: 30
-    cooldownPeriod: 300
-    cpu:
-      type: Utilization
-      value: "60"
-    cron:
-      timezone: Asia/Seoul
-      start: "0 9 * * *"
-      end: "0 18 * * *"
-      desiredReplicas: "3"
-
+# NFS-CSI
 storageClass:
-  name: aws9-storage
-  server: 211.183.3.97
+  name: BNS-storage
+  server: "ENTER_NFS_IP" # ENTER_NFS_IP
   share: /shared
   reclaimPolicy: Delete
   mountOptions:
     - nfsvers=4.2
 
+# KEDA
+scaledObjects:
+  # Main
+  - name: main-scaler
+    targetDeployment: main-deploy
+    namespace: BNS
+    minReplicaCount: 1
+    maxReplicaCount: 10
+    pollingInterval: 30
+    cooldownPeriod: 300
+    cpu:
+      type: Utilization
+      value: "60"
+    cron:
+      timezone: Asia/Seoul
+      start: "0 9 * * *"
+      end: "0 18 * * *"
+      desiredReplicas: "3"
+
+  # Blog
+  - name: blog-scaler
+    targetDeployment: blog-deploy
+    namespace: BNS
+    minReplicaCount: 1
+    maxReplicaCount: 10
+    pollingInterval: 30
+    cooldownPeriod: 300
+    cpu:
+      type: Utilization
+      value: "60"
+    cron:
+      timezone: Asia/Seoul
+      start: "0 9 * * *"
+      end: "0 18 * * *"
+      desiredReplicas: "3"
+
+  # News
+  - name: news-scaler
+    targetDeployment: news-deploy
+    namespace: BNS
+    minReplicaCount: 1
+    maxReplicaCount: 10
+    pollingInterval: 30
+    cooldownPeriod: 300
+    cpu:
+      type: Utilization
+      value: "60"
+    cron:
+      timezone: Asia/Seoul
+      start: "0 9 * * *"
+      end: "0 18 * * *"
+      desiredReplicas: "3"
+
+  # Shop
+  - name: shop-scaler
+    targetDeployment: shop-deploy
+    namespace: BNS
+    minReplicaCount: 1
+    maxReplicaCount: 10
+    pollingInterval: 30
+    cooldownPeriod: 300
+    cpu:
+      type: Utilization
+      value: "60"
+    cron:
+      timezone: Asia/Seoul
+      start: "0 9 * * *"
+      end: "0 18 * * *"
+      desiredReplicas: "3"
+
+# Metal LB
 metallb:
-  ipRange: 211.183.3.201-211.183.3.239
-  poolName: first-pool
+  ipRange: "ENTER_IP_RANGE" # ENTER AVAILABLE IP RANGE
+  poolName: metalLBpool
   namespace: metallb-system
 
+# ingress-rules
 ingress:
   className: nginx
-  host: www.aws9.pri
+  host: www."ENTER_URL".com # ENTER URL
   paths:
+    - path: /
+      serviceName: main-service
+      servicePort: 80
     - path: /shop(/|$)
       serviceName: shop-service
       servicePort: 80
@@ -150,3 +190,8 @@ ingress:
     - path: /news(/|$)
       serviceName: news-service
       servicePort: 80
+
+# Webhook
+webhook:
+  namespace: default
+  image: jongseo22/webhook-server:latest

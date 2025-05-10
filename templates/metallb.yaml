@@ -1,0 +1,45 @@
+# metallb-install-job
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: install-metallb
+  namespace: metallb-system
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  template:
+    spec:
+      containers:
+        - name: apply-metallb
+          image: bitnami/kubectl:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              curl -sSL https://raw.githubusercontent.com/metallb/metallb/v0.13.10/config/manifests/metallb-native.yaml -o /tmp/metallb.yaml && \
+              kubectl apply -f /tmp/metallb.yaml
+          env:
+            - name: KUBECONFIG
+              value: /root/.kube/config
+      restartPolicy: Never
+      serviceAccountName: helm-admin
+---
+# IP Range
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: {{ .Values.metallb.poolName }}
+  namespace: {{ .Values.metallb.namespace }}
+spec:
+  addresses:
+    - {{ .Values.metallb.ipRange }}
+---
+# IP 제공 방식
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: my-l2
+  namespace: {{ .Values.metallb.namespace }}
+spec:
+  ipAddressPools:
+    - {{ .Values.metallb.poolName }}

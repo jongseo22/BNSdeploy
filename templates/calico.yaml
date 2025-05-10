@@ -1,0 +1,20 @@
+# calico-install-job
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: install-calico
+  annotations:
+    "helm.sh/hook": post-install
+spec:
+  template:
+    spec:
+      containers:
+        - name: install
+          image: bitnami/kubectl
+          command:
+            - /bin/sh
+            - -c
+            - |
+              wget https://raw.githubusercontent.com/projectcalico/calico/v3.27.1/manifests/calico.yaml -O /tmp/calico.yaml && \
+              kubectl apply -f /tmp/calico.yaml
+      restartPolicy: Never
